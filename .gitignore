@@ -1,0 +1,11 @@
+data/*
+gh_logs/*
+mperm/*
+p-lint/*
+repos/*
+test_repos/*
+zxing/*
+
+init.db
+results
+results.*
