@@ -4,7 +4,6 @@ mperm/*
 p-lint/*
 repos/*
 test_repos/*
-zxing/*
 
 *.db
 results
