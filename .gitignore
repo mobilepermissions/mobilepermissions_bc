@@ -6,6 +6,6 @@ repos/*
 test_repos/*
 zxing/*
 
-init.db
+*.db
 results
 results.*
