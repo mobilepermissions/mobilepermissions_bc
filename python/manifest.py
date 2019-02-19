@@ -3,18 +3,20 @@ import re
 
 class manifest:
 
-  primary_child = None
-  # Lazily initiated in get_manifest_level()
-  manifest_level = None
-  
-  min_sdk_version = 1
-  target_sdk_version = 1
-  
-  permissions = []
   
 
   def __init__(self, location):
     self.location = location
+    
+    self.primary_child = None
+    # Lazily initiated in get_manifest_level()
+    self.manifest_level = None
+    
+    self.min_sdk_version = 1
+    self.target_sdk_version = 1
+    
+    self.permissions = []
+  
     
     # Replace all "../" operations and the manifest filename
     trimmed_location = re.sub(r"([.]{1,2}[/]{1,2}|AndroidManifest.xml)", "", location)
@@ -27,7 +29,9 @@ class manifest:
   def __str__(self):
     return self.nested_str(0)
     
+    
   def nested_str(self, depth):
+    # Recursive printing of manifest nesting
     ret = "\t"*depth + "-" + self.location + "\n" 
     if self.primary_child is not None:
       ret += self.primary_child.nested_str(depth+1)
@@ -49,17 +53,36 @@ class manifest:
     return self.manifest_level
     
     
+  def get_min_sdk_version(self):
+    if self.primary_child is None:
+      return self.min_sdk_version
+    return max(self.min_sdk_version, self.primary_child.get_min_sdk_version())
+    
+    
+  def get_target_sdk_version(self):
+    if self.primary_child is None:
+      return self.target_sdk_version
+    return max(self.min_sdk_version, self.primary_child.get_target_sdk_version())
+    
+  
+  def get_permissions(self):
+    # TODO account for duplicate permissions?
+    if self.primary_child is None:
+      return self.permissions
+    return self.permissions + self.primary_child.get_permissions()
+    
+    
   def merge(self, other_manifest):
     # Determine if any either of the manifests is a sub-manifest
     # of the other one
     
     # If this manifest is a child of the other manifest
     if self.path.find(other_manifest.path) != -1:
-      return merge_parent_child_manifest(other_manifest, self)
+      return manifest.merge_parent_child_manifest(other_manifest, self)
      
     # If the other manifest is a child of this manifest
     if other_manifest.path.find(self.path) != -1:
-      return merge_parent_child_manifest(self, other_manifest)
+      return manifest.merge_parent_child_manifest(self, other_manifest)
       
     ## If neither is a child, then at least one of them must be 
     ## of an incorrect build variant or main type.
@@ -80,14 +103,14 @@ class manifest:
     return other_manifest
     
   
-def merge_parent_child_manifest(parent, child):
-  new_child = child
-  # Determine if this manifest is a child of child of the parent manifest
-  if parent.primary_child is not None:
-    new_child = parent.primary_child.merge(child)
-  # Set Child
-  parent.primary_child = new_child
-  return parent
+  def merge_parent_child_manifest(parent, child):
+    new_child = child
+    # Determine if this manifest is a child of child of the parent manifest
+    if parent.primary_child is not None:
+      new_child = parent.primary_child.merge(child)
+    # Set Child
+    parent.primary_child = new_child
+    return parent
     
     
     
@@ -101,12 +124,25 @@ class manifest_level(IntEnum):
   
 if __name__ == "__main__":
   man1 = manifest("../../AndroidManifest.xml")
+  man1.permissions += [1, 2]
+  man1.min_sdk_version = 15
   man2 = manifest("../../mobile/src/main/AndroidManifest.xml")
+  man2.permissions += [4]
   man3 = manifest("../../mobile/src/main/release/AndroidManifest.xml")
+  man3.permissions += [10]
+  man3.min_sdk_version = 23
+  man3.target_sdk_version = 28
   man4 = manifest("../../mobile/src/main/androidTest/AndroidManifest.xml")
+  man4.permissions += [1, 5]
   man5 = manifest("../../glass/src/main/release/AndroidManifest.xml")
+  man5.permissions += [11]
   man6 = manifest("../../wear/src/main/release/AndroidManifest.xml")
   man7 = manifest("../../wear/src/main/AndroidManifest.xml")
   
-  print man1.merge(man4).merge(man2).merge(man7).merge(man5).merge(man6).merge(man3)
+  man = man1.merge(man4).merge(man2).merge(man7).merge(man5).merge(man6).merge(man3)
+  print man
+  print man.get_permissions()
+  print man.get_min_sdk_version()
+  print man.get_target_sdk_version()
+  
   
