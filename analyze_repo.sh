@@ -22,6 +22,11 @@
 		shift # past argument
 		shift # past value
 		;;
+    -tm|--test-manifest)
+    tm_arg="$2"
+		shift # past argument
+		shift # past value
+		;;
 	esac
 	done
 
@@ -33,6 +38,7 @@
   
 ### Python Scripts
   python_parse_manifest="python/parse_manifest.py"
+  python_locate_manifests="python/locate_manifests.py"
 	
 ### Logs
 	gh_log_dir="gh_logs"
@@ -93,27 +99,28 @@ function get_branch_sdk_version {
   # Find the manifest file
   for loc in `find $1 -name "AndroidManifest.xml";`; do
   
-    #echo "Checking manifest at location: $loc"
-  
-    if [[ $loc == *"androidtest"* ]]; then
-      :
-    else
-      #version_info=`grep -Eo "android:targetSdkVersion*=*\"*[1-9]{1,2}" $loc` 
-      #### Replace extra chars
-      #version_info=`sed 's/android:targetSdkVersion//g'` <<< "$version_info"
-      #echo $version_info
-      python ../../$python_parse_manifest get_sdk_version $loc
-    fi
+    #version_info=`grep -Eo "android:targetSdkVersion*=*\"*[1-9]{1,2}" $loc` 
+    #### Replace extra chars
+    #version_info=`sed 's/android:targetSdkVersion//g'` <<< "$version_info"
+    #echo $version_info
+    python ../../$python_parse_manifest get_sdk_version $loc
 
   done
 
-  
-#  version_info=${version_info/android:targetSdkVersion=/} 
-#  version_info=${version_info/\"/} 
-#  version_info=${version_info/\"/} 
-#  version_info=${version_info/\/>/} 
+}
 
-#  echo $version_info
+function test_manifest_location {
+
+  cd $repo_dir
+  
+    output_loc="../../$version_root/$repo_dir/master"
+    attach_tag_head $output_loc master
+    manifest_locs=`find $1 -name "AndroidManifest.xml";`
+    python ../../$python_locate_manifests get_manifests output_loc $manifest_locs
+    
+    rm -rf output_loc
+    
+    cd ../..
 }
 	
 ### Make dirs if needed
@@ -130,10 +137,17 @@ function get_branch_sdk_version {
 		echo "Cloned $repo_name."
 	fi
   
-  if [ -z "$repo_dir" ]; then
-    # No repo dir supplied or generated
+#  if [ -z "$repo_dir" ]; then
+#    # No repo dir supplied or generated
+#    :
+#  else
+#    get_releases
+#    echo "Got releases under $repo_dir"
+#  fi
+  
+  if [ -z "$tm_arg" ]; then
     :
   else
-    get_releases
-    echo "Got releases under $repo_dir"
+    test_manifest_location
   fi
+  

@@ -73,6 +73,8 @@ class manifest:
     
     
   def merge(self, other_manifest):
+    if other_manifest is None:
+      return self
     # Determine if any either of the manifests is a sub-manifest
     # of the other one
     
