@@ -18,9 +18,9 @@ class manifest:
     
     # Replace all "../" operations and the manifest filename
     trimmed_location = re.sub(r"([.]{1,2}[/]{1,2}|AndroidManifest.xml)", "", location)
-    if len(trimmed_location) > 0 and trimmed_location[0] == '/':
-      trimmed_location = trimmed_location[1, len(trimmed_location-1)]
-      
+    # Then, replace the initial "/" char if needed
+    trimmed_location = re.sub(r"^/", "", trimmed_location)
+    
     self.path = trimmed_location
     
   
@@ -56,11 +56,12 @@ class manifest:
     # If this manifest is a child of the other manifest
     if self.path.find(other_manifest.path) != -1:
       return merge_parent_child_manifest(other_manifest, self)
-      
+     
+    # If the other manifest is a child of this manifest
     if other_manifest.path.find(self.path) != -1:
       return merge_parent_child_manifest(self, other_manifest)
       
-    ## If neither is a substring, then at least one of them must be 
+    ## If neither is a child, then at least one of them must be 
     ## of an incorrect build variant or main type.
     
     # In this case, we have two unclassifiable manifest files that are
@@ -76,7 +77,7 @@ class manifest:
     #         and also contains a release manifest for wearable build
     if self.get_manifest_level() < other_manifest.get_manifest_level():
       return self
-    return other
+    return other_manifest
     
   
 def merge_parent_child_manifest(parent, child):
@@ -103,7 +104,9 @@ if __name__ == "__main__":
   man2 = manifest("../../mobile/src/main/AndroidManifest.xml")
   man3 = manifest("../../mobile/src/main/release/AndroidManifest.xml")
   man4 = manifest("../../mobile/src/main/androidTest/AndroidManifest.xml")
+  man5 = manifest("../../glass/src/main/release/AndroidManifest.xml")
+  man6 = manifest("../../wear/src/main/release/AndroidManifest.xml")
+  man7 = manifest("../../wear/src/main/AndroidManifest.xml")
   
-  print man1.merge(man2).merge(man3).merge(man4)
-  print man4
+  print man1.merge(man4).merge(man2).merge(man7).merge(man5).merge(man6).merge(man3)
   
