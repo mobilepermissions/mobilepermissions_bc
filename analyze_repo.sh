@@ -51,7 +51,7 @@ function repo_to_dir {
 	
 function instantiate_repo {
 	### Pulls the repository specified as a parameter
-	gh_url="https://github.com/$repo_name.git"
+	gh_url="https://u:p@github.com/$repo_name.git"
 	
 	# Make the destination for the repo
 	clone_dir=`repo_to_dir $repo_name`
@@ -115,10 +115,8 @@ function test_manifest_location {
   
     output_loc="../../$version_root/$repo_dir/master"
     attach_tag_head $output_loc master
-    manifest_locs=`find $1 -name "AndroidManifest.xml";`
-    python ../../$python_locate_manifests get_manifests output_loc $manifest_locs
-    
-    rm -rf output_loc
+    manifest_locs=`find $output_loc -name "AndroidManifest.xml";`
+    python ../../$python_locate_manifests get_manifests $output_loc $manifest_locs
     
     cd ../..
 }

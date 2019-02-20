@@ -3,7 +3,6 @@ import re
 
 class manifest:
 
-  
 
   def __init__(self, location):
     self.location = location
@@ -32,9 +31,9 @@ class manifest:
     
   def nested_str(self, depth):
     # Recursive printing of manifest nesting
-    ret = "\t"*depth + "-" + self.location + "\n" 
+    ret = "\t"*depth + "-" + self.location
     if self.primary_child is not None:
-      ret += self.primary_child.nested_str(depth+1)
+      ret += "\n" + self.primary_child.nested_str(depth+1)
     return ret
     
     
@@ -43,7 +42,7 @@ class manifest:
       
       if self.path == "":
         self.manifest_level = manifest_level.library
-      elif re.search(r"(android/|mobile/)(src/)?(main/)?$", self.path):
+      elif re.search(r"(android/|mobile/)(src/main/)?$", self.path):
         self.manifest_level = manifest_level.main
       elif re.search(r"release/$", self.path):
         self.manifest_level = manifest_level.build_variant
@@ -79,11 +78,11 @@ class manifest:
     # of the other one
     
     # If this manifest is a child of the other manifest
-    if self.path.find(other_manifest.path) != -1:
+    if self.path.find(other_manifest.path) == 0:
       return manifest.merge_parent_child_manifest(other_manifest, self)
      
     # If the other manifest is a child of this manifest
-    if other_manifest.path.find(self.path) != -1:
+    if other_manifest.path.find(self.path) == 0:
       return manifest.merge_parent_child_manifest(self, other_manifest)
       
     ## If neither is a child, then at least one of them must be 
