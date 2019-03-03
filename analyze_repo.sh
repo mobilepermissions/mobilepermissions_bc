@@ -6,6 +6,23 @@
 ### Includes
 .   db_client/sqlite_client.sh
 
+
+
+### Collected Repos root
+	gh_repos_dir="test_repos"
+  
+### Repo Versions root
+  version_root="versions"
+  
+### Python Scripts
+  python_runtime="python3"
+  python_parse_manifest="python/parse_manifest.py"
+  python_locate_manifests="python/locate_manifests.py"
+	
+### Logs
+	gh_log_dir="gh_logs"
+	gh_log_file_clone="$gh_log_dir/clone.txt"
+  
 ### Get params
 	while [[ $# -gt 0 ]]
 	do
@@ -23,26 +40,11 @@
 		shift # past value
 		;;
     -tm|--test-manifest)
-    tm_arg="$2"
+    tm_arg=1
 		shift # past argument
-		shift # past value
 		;;
 	esac
 	done
-
-### Collected Repos root
-	gh_repos_dir="test_repos"
-  
-### Repo Versions root
-  version_root="versions"
-  
-### Python Scripts
-  python_parse_manifest="python/parse_manifest.py"
-  python_locate_manifests="python/locate_manifests.py"
-	
-### Logs
-	gh_log_dir="gh_logs"
-	gh_log_file_clone="$gh_log_dir/clone.txt"
 	
 function repo_to_dir {
 	c_d=${1//\//-}
@@ -85,9 +87,13 @@ function attach_tag_head {
   # $1 output_location
   # $2 tag to checkout the head of
   mkdir -p "$output_loc"
+  
+  cd $repo_dir
       
-  git checkout --quiet $2
-  git --work-tree=$1 checkout --quiet HEAD -- .
+    git checkout --quiet $2
+    git --work-tree=$1 checkout --quiet HEAD -- .
+  
+  cd ../..
   
   echo "Checked out head of tag: $2"
 }
@@ -96,14 +102,10 @@ function get_branch_sdk_version {
   ### Parameters
   # $1 branch_location
   
-  # Find the manifest file
+  # Find the manifest files
   for loc in `find $1 -name "AndroidManifest.xml";`; do
   
-    #version_info=`grep -Eo "android:targetSdkVersion*=*\"*[1-9]{1,2}" $loc` 
-    #### Replace extra chars
-    #version_info=`sed 's/android:targetSdkVersion//g'` <<< "$version_info"
-    #echo $version_info
-    python ../../$python_parse_manifest get_sdk_version $loc
+    python3 ../../$python_parse_manifest get_sdk_version $loc
 
   done
 
@@ -111,14 +113,19 @@ function get_branch_sdk_version {
 
 function test_manifest_location {
 
-  cd $repo_dir
-  
-    output_loc="../../$version_root/$repo_dir/master"
-    attach_tag_head $output_loc master
-    manifest_locs=`find $output_loc -name "AndroidManifest.xml";`
-    python ../../$python_locate_manifests get_manifests $output_loc $manifest_locs
+#  cd $repo_dir
+#  
+#    output_loc="../../$version_root/$repo_dir/master"
+#    attach_tag_head $output_loc master
+#    manifest_locs=`find $output_loc -name "AndroidManifest.xml";`
+#    python3 ../../$python_locate_manifests get_manifests $output_loc $manifest_locs
     
-    cd ../..
+#    cd ../..
+    
+  output_loc="$version_root/$repo_dir/master"
+  attach_tag_head $output_loc master
+  manifest_locs=`find $output_loc -name "AndroidManifest.xml";`
+  $python_runtime $python_locate_manifests get_manifests $output_loc $manifest_locs
 }
 	
 ### Make dirs if needed
@@ -127,25 +134,17 @@ function test_manifest_location {
 	touch $gh_log_file_clone
 
 ### Handle script
-	if [ -z "$repo_name" ]; then 
-		# No repo name supplied
-    :
-	else
+	if [ ! -z "$repo_name" ]; then 
 		instantiate_repo
 		echo "Cloned $repo_name."
 	fi
   
-#  if [ -z "$repo_dir" ]; then
-#    # No repo dir supplied or generated
-#    :
-#  else
+#  if [ ! -z "$repo_dir" ]; then
 #    get_releases
 #    echo "Got releases under $repo_dir"
 #  fi
   
-  if [ -z "$tm_arg" ]; then
-    :
-  else
+  if [ ! -z "$tm_arg" ]; then
     test_manifest_location
   fi
   

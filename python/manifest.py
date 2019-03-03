@@ -1,11 +1,12 @@
+# -*- coding: utf-8 -*-
+
 from enum import IntEnum
 import re
 
-class manifest:
-
+class Manifest():
 
   def __init__(self, location):
-    self.location = location
+    self.location = re.sub(r".*/master/","",location)
     
     self.primary_child = None
     # Lazily initiated in get_manifest_level()
@@ -18,7 +19,7 @@ class manifest:
   
     
     # Replace all "../" operations and the manifest filename
-    trimmed_location = re.sub(r"([.]{1,2}[/]{1,2}|AndroidManifest.xml)", "", location)
+    trimmed_location = re.sub(r"([.]{1,2}[/]{1,2}|AndroidManifest.xml)", "", self.location)
     # Then, replace the initial "/" char if needed
     trimmed_location = re.sub(r"^/", "", trimmed_location)
     
@@ -29,23 +30,32 @@ class manifest:
     return self.nested_str(0)
     
     
-  def nested_str(self, depth):
+  def nested_str(self, depth, final = False):
+    # Determine what characters should be pre-pended for display purposes
+    tree_char = '└'
+    pre_pend_char = '│'
+    if depth == 0 and not final:
+      tree_char = '├'
+    if final:
+      pre_pend_char = ''
     # Recursive printing of manifest nesting
-    ret = "\t"*depth + "-" + self.location
+    ret = "    "*depth + tree_char + "── " + self.location + " " + str(self.get_manifest_level())
     if self.primary_child is not None:
-      ret += "\n" + self.primary_child.nested_str(depth+1)
+      ret += "\n" + pre_pend_char + self.primary_child.nested_str(depth+1, final)
     return ret
     
     
   def get_manifest_level(self):
     if self.manifest_level == None:
-      
-      if self.path == "":
-        self.manifest_level = manifest_level.library
-      elif re.search(r"(android/|mobile/)(src/main/)?$", self.path):
-        self.manifest_level = manifest_level.main
+    
+      if re.search(r"(glass/|wear/|androidTest/|test/)", self.path):
+        self.manifest_level = manifest_level.unknown
       elif re.search(r"release/$", self.path):
         self.manifest_level = manifest_level.build_variant
+      elif re.search(r".*/.*(src/main)?/$", self.path):
+        self.manifest_level = manifest_level.main
+      elif self.path.count('/') <= 1:
+        self.manifest_level = manifest_level.library
       else:
         self.manifest_level = manifest_level.unknown
     
@@ -73,17 +83,26 @@ class manifest:
     
   def merge(self, other_manifest):
     if other_manifest is None:
-      return self
+      return self, False
     # Determine if any either of the manifests is a sub-manifest
     # of the other one
     
+    # Case: App Library Manifest located in parent directory of library
+    if self.get_manifest_level() == manifest_level.library \
+        and other.get_manifest_level == manifest_level.library:
+      return self, False
+    
     # If this manifest is a child of the other manifest
-    if self.path.find(other_manifest.path) == 0:
-      return manifest.merge_parent_child_manifest(other_manifest, self)
+    # And this isn't the head
+    if (self.path.find(other_manifest.path) == 0 \
+        or other_manifest.get_manifest_level() == manifest_level.head) \
+        and self.get_manifest_level() != manifest_level.head:
+      return Manifest.merge_parent_child_manifest(other_manifest, self)
      
     # If the other manifest is a child of this manifest
-    if other_manifest.path.find(self.path) == 0:
-      return manifest.merge_parent_child_manifest(self, other_manifest)
+    if other_manifest.path.find(self.path) == 0 \
+        or self.get_manifest_level() == manifest_level.head:
+      return Manifest.merge_parent_child_manifest(self, other_manifest)
       
     ## If neither is a child, then at least one of them must be 
     ## of an incorrect build variant or main type.
@@ -91,7 +110,7 @@ class manifest:
     # In this case, we have two unclassifiable manifest files that are
     # un-related by our definitions
     if self.get_manifest_level() == -1 and other_manifest.get_manifest_level() == -1:
-      return None
+      return None, False
       
     # If the two manifests are not associated but are both valid,
     # then return the manifest with that has a lower manifest level
@@ -100,50 +119,29 @@ class manifest:
     #     ex. project contains a main manifest for android build
     #         and also contains a release manifest for wearable build
     if self.get_manifest_level() < other_manifest.get_manifest_level():
-      return self
-    return other_manifest
+      return self, False
+    return other_manifest, False
     
   
   def merge_parent_child_manifest(parent, child):
     new_child = child
+    merged = True
     # Determine if this manifest is a child of child of the parent manifest
     if parent.primary_child is not None:
-      new_child = parent.primary_child.merge(child)
+      new_child, merged = parent.primary_child.merge(child)
     # Set Child
     parent.primary_child = new_child
-    return parent
+    return parent, merged
     
     
     
 class manifest_level(IntEnum):
+  head = 0
   library = 1
   main = 2
   build_variant = 3
   unknown = 404
   
-  
-  
-if __name__ == "__main__":
-  man1 = manifest("../../AndroidManifest.xml")
-  man1.permissions += [1, 2]
-  man1.min_sdk_version = 15
-  man2 = manifest("../../mobile/src/main/AndroidManifest.xml")
-  man2.permissions += [4]
-  man3 = manifest("../../mobile/src/main/release/AndroidManifest.xml")
-  man3.permissions += [10]
-  man3.min_sdk_version = 23
-  man3.target_sdk_version = 28
-  man4 = manifest("../../mobile/src/main/androidTest/AndroidManifest.xml")
-  man4.permissions += [1, 5]
-  man5 = manifest("../../glass/src/main/release/AndroidManifest.xml")
-  man5.permissions += [11]
-  man6 = manifest("../../wear/src/main/release/AndroidManifest.xml")
-  man7 = manifest("../../wear/src/main/AndroidManifest.xml")
-  
-  man = man1.merge(man4).merge(man2).merge(man7).merge(man5).merge(man6).merge(man3)
-  print man
-  print man.get_permissions()
-  print man.get_min_sdk_version()
-  print man.get_target_sdk_version()
+
   
   

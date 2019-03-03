@@ -6,7 +6,7 @@ function test {
     echo $gh_repo
     
     if [ ! -z "$gh_repo" ]; then
-      ./analyze_repo.sh -r $gh_repo -tm asd >> out3.txt
+      ./analyze_repo.sh -r $gh_repo --test-manifest >> out5.txt
     fi
   done
 }
