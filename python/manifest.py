@@ -89,7 +89,7 @@ class Manifest():
     
     # Case: App Library Manifest located in parent directory of library
     if self.get_manifest_level() == manifest_level.library \
-        and other.get_manifest_level == manifest_level.library:
+        and other_manifest.get_manifest_level == manifest_level.library:
       return self, False
     
     # If this manifest is a child of the other manifest

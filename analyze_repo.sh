@@ -88,12 +88,14 @@ function attach_tag_head {
   # $2 tag to checkout the head of
   mkdir -p "$output_loc"
   
-  cd $repo_dir
-      
-    git checkout --quiet $2
-    git --work-tree=$1 checkout --quiet HEAD -- .
-  
-  cd ../..
+  if [ -d "$repo_dir" ]; then
+    cd $repo_dir
+        
+      git checkout --quiet $2
+      git --work-tree=$1 checkout --quiet HEAD -- .
+    
+    cd ../..
+  fi
   
   echo "Checked out head of tag: $2"
 }

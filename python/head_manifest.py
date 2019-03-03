@@ -40,21 +40,21 @@ class HeadManifest(Manifest):
   
 if __name__ == "__main__":
   man0 = HeadManifest()
-  man1 = Manifest("app/AndroidManifest.xml")
+  man1 = Manifest("AndroidManifest.xml")
   man1.permissions += [1, 2]
   man1.min_sdk_version = 15
-  man2 = Manifest("app/mobile/src/main/AndroidManifest.xml")
+  man2 = Manifest("mobile/src/main/AndroidManifest.xml")
   man2.permissions += [4]
-  man3 = Manifest("app/mobile/src/main/release/AndroidManifest.xml")
+  man3 = Manifest("mobile/src/main/release/AndroidManifest.xml")
   man3.permissions += [10]
   man3.min_sdk_version = 23
   man3.target_sdk_version = 28
-  man4 = Manifest("app/mobile/src/main/androidTest/AndroidManifest.xml")
+  man4 = Manifest("mobile/src/main/androidTest/AndroidManifest.xml")
   man4.permissions += [1, 5]
-  man5 = Manifest("app/glass/src/main/release/AndroidManifest.xml")
+  man5 = Manifest("glass/src/main/release/AndroidManifest.xml")
   man5.permissions += [11]
-  man6 = Manifest("app/wear/src/main/release/AndroidManifest.xml")
-  man7 = Manifest("app/wear/src/main/AndroidManifest.xml")
+  man6 = Manifest("wear/src/main/release/AndroidManifest.xml")
+  man7 = Manifest("wear/src/main/AndroidManifest.xml")
   man8 = Manifest("externalLibrary/AndroidManifest.xml")
   man9 = Manifest("externalLibrary/src/main/AndroidManifest.xml")
   
