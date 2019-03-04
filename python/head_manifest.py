@@ -5,13 +5,12 @@ from manifest import Manifest, manifest_level
 class HeadManifest(Manifest):
 
   def __init__(self):
-    #super(type(HeadManifest), self).__init__()
     Manifest.__init__(self, "HEAD")
     self.head_children = []
     self.manifest_level = manifest_level.head
   
   def __str__(self):
-    ret = "HEAD"
+    ret = "HEAD (minSDK=" + str(self.get_min_sdk_version()) + ", targetSDK="  + str(self.get_target_sdk_version()) + ")" 
     cur_child = 0
     for child in self.head_children:
       cur_child = cur_child + 1
@@ -36,23 +35,31 @@ class HeadManifest(Manifest):
     # print("Throwing out manifest: " + str(other_manifest.path))
     return self, False
     
+  def get_min_sdk_version(self):
+    min_sdk_version = 1
+    for child in self.head_children:
+      child_sdk = child.get_min_sdk_version()
+      if child_sdk is not None:
+        min_sdk_version = max(min_sdk_version, child_sdk)
+    return min_sdk_version
+    
+  def get_target_sdk_version(self):
+    target_sdk_version = 1
+    for child in self.head_children:
+      child_sdk = child.get_target_sdk_version()
+      if child_sdk is not None:
+        target_sdk_version = max(target_sdk_version, child_sdk)
+    return target_sdk_version
+    
   
   
 if __name__ == "__main__":
   man0 = HeadManifest()
   man1 = Manifest("AndroidManifest.xml")
-  man1.permissions += [1, 2]
-  man1.min_sdk_version = 15
   man2 = Manifest("mobile/src/main/AndroidManifest.xml")
-  man2.permissions += [4]
   man3 = Manifest("mobile/src/main/release/AndroidManifest.xml")
-  man3.permissions += [10]
-  man3.min_sdk_version = 23
-  man3.target_sdk_version = 28
   man4 = Manifest("mobile/src/main/androidTest/AndroidManifest.xml")
-  man4.permissions += [1, 5]
   man5 = Manifest("glass/src/main/release/AndroidManifest.xml")
-  man5.permissions += [11]
   man6 = Manifest("wear/src/main/release/AndroidManifest.xml")
   man7 = Manifest("wear/src/main/AndroidManifest.xml")
   man8 = Manifest("externalLibrary/AndroidManifest.xml")

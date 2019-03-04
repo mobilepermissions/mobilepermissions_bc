@@ -117,19 +117,9 @@ function get_branch_sdk_version {
 
 function test_manifest_location {
 
-#  cd $repo_dir
-#  
-#    output_loc="../../$version_root/$repo_dir/master"
-#    attach_tag_head $output_loc master
-#    manifest_locs=`find $output_loc -name "AndroidManifest.xml";`
-#    python3 ../../$python_locate_manifests get_manifests $output_loc $manifest_locs
-    
-#    cd ../..
-    
   output_loc="$version_root/$repo_dir/master"
   attach_tag_head $output_loc master
   manifest_locs=`find $output_loc -name "AndroidManifest.xml";`
-  echo "manifests: $manifest_locs"
   $python_runtime $python_locate_manifests get_manifests $output_loc $manifest_locs
 }
 	

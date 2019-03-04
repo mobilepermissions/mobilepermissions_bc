@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from enum import IntEnum
+from parse_manifest import ManifestParser
 import re
 
 class Manifest():
@@ -12,11 +13,7 @@ class Manifest():
     # Lazily initiated in get_manifest_level()
     self.manifest_level = None
     
-    self.min_sdk_version = 1
-    self.target_sdk_version = 1
-    
-    self.permissions = []
-  
+    self.parser = ManifestParser(location)
     
     # Replace all "../" operations and the manifest filename
     trimmed_location = re.sub(r"([.]{1,2}[/]{1,2}|AndroidManifest.xml)", "", self.location)
@@ -39,7 +36,7 @@ class Manifest():
     if final:
       pre_pend_char = ''
     # Recursive printing of manifest nesting
-    ret = "    "*depth + tree_char + "── " + self.location + " " + str(self.get_manifest_level())
+    ret = "    "*depth + tree_char + "── " + self.location + " (minSDK=" + str(self.parser.get_min_sdk_version()) + ", targetSDK=" + str(self.parser.get_target_sdk_version()) + ")"
     if self.primary_child is not None:
       ret += "\n" + pre_pend_char + self.primary_child.nested_str(depth+1, final)
     return ret
@@ -63,15 +60,35 @@ class Manifest():
     
     
   def get_min_sdk_version(self):
+    self_min_sdk = self.parser.get_min_sdk_version()
     if self.primary_child is None:
-      return self.min_sdk_version
-    return max(self.min_sdk_version, self.primary_child.get_min_sdk_version())
+      return self_min_sdk
+    child_min_sdk = self.primary_child.get_min_sdk_version()
+    
+    # If either of the values is None, return the other.
+    # It's okay if None is returned here
+    if self_min_sdk == None:
+      return child_min_sdk
+    if child_min_sdk == None:
+      return self_min_sdk
+    # Otherwise return the max of the two
+    return max(child_min_sdk, self_min_sdk)
     
     
   def get_target_sdk_version(self):
+    self_target_sdk = self.parser.get_target_sdk_version()
     if self.primary_child is None:
-      return self.target_sdk_version
-    return max(self.min_sdk_version, self.primary_child.get_target_sdk_version())
+      return self_target_sdk
+    child_target_sdk = self.primary_child.get_target_sdk_version()
+    
+    # If either of the values is None, return the other.
+    # It's okay if None is returned here
+    if self_target_sdk == None:
+      return child_target_sdk
+    if child_target_sdk == None:
+      return self_target_sdk
+    # Otherwise return the max of the two
+    return max(child_target_sdk, self_target_sdk)
     
   
   def get_permissions(self):
