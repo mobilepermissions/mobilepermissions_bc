@@ -58,10 +58,10 @@ function instantiate_repo {
 	# Make the destination for the repo
 	clone_dir=`repo_to_dir $repo_name`
 	
-	# Clone repsitory and return duration of operation in seconds
+	# Clone repsitory
 	git clone --quiet $gh_url $clone_dir
   
-  # Set the repo_dir and begin analysis
+  # Set the repo_dir to begin analysis
   repo_dir=$clone_dir
 }
 
@@ -86,15 +86,17 @@ function attach_tag_head {
   ### Parameters
   # $1 output_location
   # $2 tag to checkout the head of
-  mkdir -p "$output_loc"
+    
+  mkdir -p "$1"
   
   if [ -d "$repo_dir" ]; then
     cd $repo_dir
-        
+      
+      # Check out the specified tag
       git checkout --quiet $2
-      git --work-tree=$1 checkout --quiet HEAD -- .
+      git --work-tree="../../$1" checkout --quiet HEAD -- .
     
-    cd ../..
+      cd ../..
   fi
   
   echo "Checked out head of tag: $2"
@@ -127,6 +129,7 @@ function test_manifest_location {
   output_loc="$version_root/$repo_dir/master"
   attach_tag_head $output_loc master
   manifest_locs=`find $output_loc -name "AndroidManifest.xml";`
+  echo "manifests: $manifest_locs"
   $python_runtime $python_locate_manifests get_manifests $output_loc $manifest_locs
 }
 	
