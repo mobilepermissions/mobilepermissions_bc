@@ -1,7 +1,15 @@
 ### This file contains scripts for analyzing a single git repository
 
 ### Usage
-### 	`analyze_repo [-r|--repo repo_name] [-d|--directory cloned_repo_dir]`
+### 	analyze_repo 
+###       [-r|--repo repo_name] 
+###         Specifies the name of the repo to perform the action on.
+###         This will obtain the repo from github and then set the -d variable accordingly.
+###       [-d|--directory cloned_repo_dir]
+###         Specifies the directory to perform the action on.
+###       [-p|--python]
+###         Specifies the python 3.X runtime to use for executing python code.
+###         Default is `python3`.
 
 ### Includes
 .   db_client/sqlite_client.sh
@@ -42,6 +50,11 @@
     -tm|--test-manifest)
     tm_arg=1
 		shift # past argument
+		;;
+    -p|--python)
+    python_runtime="$2"
+		shift # past argument
+    shift # past argument
 		;;
 	esac
 	done
@@ -109,7 +122,7 @@ function get_branch_sdk_version {
   # Find the manifest files
   for loc in `find $1 -name "AndroidManifest.xml";`; do
   
-    python3 ../../$python_parse_manifest get_sdk_version $loc
+    $python_runtime ../../$python_parse_manifest get_sdk_version $loc
 
   done
 
