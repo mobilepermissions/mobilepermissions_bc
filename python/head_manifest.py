@@ -10,7 +10,7 @@ class HeadManifest(Manifest):
     self.manifest_level = manifest_level.head
   
   def __str__(self):
-    ret = "HEAD (minSDK=" + str(self.get_min_sdk_version()) + ", targetSDK="  + str(self.get_target_sdk_version()) + ")" 
+    ret = "HEAD (minSDK=" + str(self.get_min_sdk_version()) + ", targetSDK="  + str(self.get_target_sdk_version()) + ", permCount=" + str(len(self.get_permissions())) + ")" 
     cur_child = 0
     for child in self.head_children:
       cur_child = cur_child + 1
@@ -50,6 +50,12 @@ class HeadManifest(Manifest):
       if child_sdk is not None:
         target_sdk_version = max(target_sdk_version, child_sdk)
     return target_sdk_version
+    
+  def get_permissions(self):
+    permissions = []
+    for child in self.head_children:
+      permissions += child.get_permissions()
+    return permissions
     
   
   

@@ -1,4 +1,6 @@
 function test {
+  log=out6.txt
+  rm $log
   for file in fdroid/fdroiddata/metadata/*.txt; do 
     gh_line=`grep "Source Code:https://github.com/" $file`
     gh_repo=$(sed 's|Source Code:https:\/\/github.com/||' <<< $gh_line)
@@ -6,7 +8,7 @@ function test {
     echo $gh_repo
     
     if [ ! -z "$gh_repo" ]; then
-      ./analyze_repo.sh -r $gh_repo --test-manifest >> out6.txt
+      ./analyze_repo.sh -r $gh_repo --test-manifest >> $log
     fi
   done
 }

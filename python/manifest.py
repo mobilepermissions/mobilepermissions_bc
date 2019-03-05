@@ -36,7 +36,7 @@ class Manifest():
     if final:
       pre_pend_char = ''
     # Recursive printing of manifest nesting
-    ret = "    "*depth + tree_char + "── " + self.location + " (minSDK=" + str(self.parser.get_min_sdk_version()) + ", targetSDK=" + str(self.parser.get_target_sdk_version()) + ")"
+    ret = "    "*depth + tree_char + "── " + self.location + " (minSDK=" + str(self.parser.get_min_sdk_version()) + ", targetSDK=" + str(self.parser.get_target_sdk_version()) + ", permCount=" + str(len(self.parser.get_permissions())) + ")"
     if self.primary_child is not None:
       ret += "\n" + pre_pend_char + self.primary_child.nested_str(depth+1, final)
     return ret
@@ -93,9 +93,10 @@ class Manifest():
   
   def get_permissions(self):
     # TODO account for duplicate permissions?
+    self_permissions = self.parser.get_permissions()
     if self.primary_child is None:
-      return self.permissions
-    return self.permissions + self.primary_child.get_permissions()
+      return self_permissions
+    return self_permissions + self.primary_child.get_permissions()
     
     
   def merge(self, other_manifest):
