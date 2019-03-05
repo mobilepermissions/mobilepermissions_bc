@@ -14,7 +14,7 @@ def get_manifests(root, manifest_locs):
     if not re.search(invalid_manifest_paths, manifest_loc):
       manifest_head, merged = manifest_head.merge(Manifest(manifest_loc))
   print("-----------------\n--Final Structure--\n" + str(manifest_head))
-  return str(manifest_head is not None) + "\n"
+  return str(manifest_head.get_permissions()) + "\n"
 
 if __name__ == "__main__":
   if len(sys.argv) >= 2:

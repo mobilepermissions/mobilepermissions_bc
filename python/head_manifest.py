@@ -55,7 +55,7 @@ class HeadManifest(Manifest):
     permissions = []
     for child in self.head_children:
       permissions += child.get_permissions()
-    return permissions
+    return set(permissions)
     
   
   
