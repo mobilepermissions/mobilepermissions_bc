@@ -151,6 +151,13 @@ class Manifest():
     parent.primary_child = new_child
     return parent, merged
     
+  def get_self_and_children_paths(self):
+    if self.primary_child is not None:
+      child_locs = self.primary_child.get_self_and_children_paths()
+      if child_locs is not None:
+        return [self.location] + child_locs
+    return [self.location]
+    
     
     
 class manifest_level(IntEnum):

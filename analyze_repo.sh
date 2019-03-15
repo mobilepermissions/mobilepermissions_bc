@@ -115,6 +115,22 @@ function attach_tag_head {
   echo "Checked out head of branch: $2"
 }
 
+function checkout_commit {
+  ### Parameters
+  # $1 output_location
+  # $2 commit to checkout
+    
+  mkdir -p "$1"
+  
+  if [ -d "$repo_dir" ]; then
+    cd $repo_dir
+      
+      git --work-tree="../../$1" checkout --quiet $2
+    
+      cd ../..
+  fi
+}
+
 function get_branch_sdk_version {
   ### Parameters
   # $1 branch_location
@@ -130,10 +146,28 @@ function get_branch_sdk_version {
 
 function test_manifest_location {
 
-  output_loc="$version_root/$repo_dir/master"
+  output_loc="$version_root/$repo_dir"
+  output_loc_master=$output_loc/master
   attach_tag_head $output_loc master
   manifest_locs=`find $output_loc -name "AndroidManifest.xml" -o -name "build.gradle";`
-  $python_runtime $python_locate_manifests get_manifests $output_loc $manifest_locs
+  pertinent_locations=`$python_runtime $python_locate_manifests get_manifests $output_loc $manifest_locs`
+  # cd is needed because the cit command references the current directory
+  cd $repo_dir
+    # Get each commit where one of the pertinent files was modified
+    all_commits=""
+    for loc in $pertinent_locations; do
+      commits=`git log --pretty=format:"%ct~%H" --follow -- $loc`
+      all_commits="$all_commits $commits"
+    done
+    cd ../..
+  # Sort commits by their UNIX timestamp (Also removes duplicates)
+  sorted_commits=`echo $all_commits | tr " " "\n" | sort -nu`
+  for commit in $sorted_commits; do
+    # Get just the commit sha, now that we don't need timestamp for sorting
+    commit_sha=`sed -e 's#.*~\(\)#\1#' <<< "$commit"`
+    checkout_commit $output_loc/$commit_sha $commit_sha
+  done
+
 }
 	
 ### Make dirs if needed

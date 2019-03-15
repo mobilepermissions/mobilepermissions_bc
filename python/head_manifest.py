@@ -70,6 +70,14 @@ class HeadManifest(Manifest):
   def add_gradle(self, gradle):
     self.gradle_files.append(gradle)
     
+  def get_pertinent_files(self):
+    ret = []
+    for child in self.head_children:
+      ret += child.get_self_and_children_paths()
+    for gradle in self.gradle_files:
+      ret.append(gradle.location)
+    return " ".join(ret)
+    
   
   
 if __name__ == "__main__":

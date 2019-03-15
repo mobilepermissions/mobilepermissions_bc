@@ -1,5 +1,5 @@
 function test {
-  log=out6.txt
+  log=out7.txt
   rm $log
   for file in fdroid/fdroiddata/metadata/*.txt; do 
     gh_line=`grep "Source Code:https://github.com/" $file`
