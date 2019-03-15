@@ -149,8 +149,8 @@ function test_manifest_location {
   output_loc="$version_root/$repo_dir"
   output_loc_master=$output_loc/master
   attach_tag_head $output_loc master
-  manifest_locs=`find $output_loc -name "AndroidManifest.xml" -o -name "build.gradle";`
-  pertinent_locations=`$python_runtime $python_locate_manifests get_manifests $output_loc $manifest_locs`
+  manifest_locs=`find $output_loc_master -name "AndroidManifest.xml" -o -name "build.gradle";`
+  pertinent_locations=`$python_runtime $python_locate_manifests get_manifests $output_loc_master $manifest_locs`
   # cd is needed because the cit command references the current directory
   cd $repo_dir
     # Get each commit where one of the pertinent files was modified
