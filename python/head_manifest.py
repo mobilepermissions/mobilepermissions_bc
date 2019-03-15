@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from manifest import Manifest, manifest_level
+from gradle import GradleFile
 
 class HeadManifest(Manifest):
 
   def __init__(self):
     Manifest.__init__(self, "HEAD")
     self.head_children = []
+    self.gradle_files = []
     self.manifest_level = manifest_level.head
   
   def __str__(self):
@@ -15,6 +17,8 @@ class HeadManifest(Manifest):
     for child in self.head_children:
       cur_child = cur_child + 1
       ret += "\n" + child.nested_str(0, cur_child == len(self.head_children))
+    for gradle_file in self.gradle_files:
+      ret += '\n' + str(gradle_file)
     return ret
 
   def merge(self, other_manifest):
@@ -41,6 +45,9 @@ class HeadManifest(Manifest):
       child_sdk = child.get_min_sdk_version()
       if child_sdk is not None:
         min_sdk_version = max(min_sdk_version, child_sdk)
+    for gradle_file in self.gradle_files:
+      gradle_sdk = gradle_file.get_min_sdk()
+      min_sdk_version = max(min_sdk_version, gradle_sdk)
     return min_sdk_version
     
   def get_target_sdk_version(self):
@@ -49,6 +56,9 @@ class HeadManifest(Manifest):
       child_sdk = child.get_target_sdk_version()
       if child_sdk is not None:
         target_sdk_version = max(target_sdk_version, child_sdk)
+    for gradle_file in self.gradle_files:
+      gradle_sdk = gradle_file.get_target_sdk()
+      target_sdk_version = max(target_sdk_version, gradle_sdk)
     return target_sdk_version
     
   def get_permissions(self):
@@ -56,6 +66,9 @@ class HeadManifest(Manifest):
     for child in self.head_children:
       permissions += child.get_permissions()
     return set(permissions)
+    
+  def add_gradle(self, gradle):
+    self.gradle_files.append(gradle)
     
   
   

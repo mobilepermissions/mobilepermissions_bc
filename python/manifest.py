@@ -7,7 +7,7 @@ import re
 class Manifest():
 
   def __init__(self, location):
-    self.location = re.sub(r".*/master/","",location)
+    self.location = re.sub(r"^.*/master/","",location)
     
     self.primary_child = None
     # Lazily initiated in get_manifest_level()

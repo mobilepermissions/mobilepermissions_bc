@@ -112,7 +112,7 @@ function attach_tag_head {
       cd ../..
   fi
   
-  echo "Checked out head of tag: $2"
+  echo "Checked out head of branch: $2"
 }
 
 function get_branch_sdk_version {
@@ -132,7 +132,7 @@ function test_manifest_location {
 
   output_loc="$version_root/$repo_dir/master"
   attach_tag_head $output_loc master
-  manifest_locs=`find $output_loc -name "AndroidManifest.xml";`
+  manifest_locs=`find $output_loc -name "AndroidManifest.xml" -o -name "build.gradle";`
   $python_runtime $python_locate_manifests get_manifests $output_loc $manifest_locs
 }
 	
