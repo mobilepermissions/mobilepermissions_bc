@@ -10,6 +10,8 @@ function test {
     if [ ! -z "$gh_repo" ]; then
       ./analyze_repo.sh -r $gh_repo --test-manifest >> $log
     fi
+    
+    break
   done
 }
 

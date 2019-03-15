@@ -148,7 +148,7 @@ function test_manifest_location {
 
   output_loc="$version_root/$repo_dir"
   output_loc_master=$output_loc/master
-  attach_tag_head $output_loc master
+  attach_tag_head $output_loc_master master
   manifest_locs=`find $output_loc_master -name "AndroidManifest.xml" -o -name "build.gradle";`
   pertinent_locations=`$python_runtime $python_locate_manifests get_manifests $output_loc_master $manifest_locs`
   # cd is needed because the cit command references the current directory
@@ -165,7 +165,16 @@ function test_manifest_location {
   for commit in $sorted_commits; do
     # Get just the commit sha, now that we don't need timestamp for sorting
     commit_sha=`sed -e 's#.*~\(\)#\1#' <<< "$commit"`
-    checkout_commit $output_loc/$commit_sha $commit_sha
+    this_commit_output_loc=$output_loc/$commit_sha
+    checkout_commit $this_commit_output_loc $commit_sha
+    # Get manifest content for this commit
+    # TODO instead of finding these files each time, can we just use the $pretinent_locations?
+    this_commit_manifest_locs=`find $this_commit_output_loc -name "AndroidManifest.xml" -o -name "build.gradle";`
+    this_commit_manifest_display=`$python_runtime $python_locate_manifests display_manifests $this_commit_output_loc $this_commit_manifest_locs`
+  
+    # echo wasn't displaying newlines
+    printf "$this_commit_manifest_display"
+    rm -rf $this_commit_output_loc
   done
 
 }
