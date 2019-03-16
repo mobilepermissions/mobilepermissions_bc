@@ -14,9 +14,9 @@ def display_manifests(root, manifest_locs):
     print(manifest_loc)
     if "AndroidManifest.xml" in manifest_loc:
       if not re.search(invalid_manifest_paths, manifest_loc):
-        manifest_head, merged = manifest_head.merge(Manifest(manifest_loc))
+        manifest_head, merged = manifest_head.merge(Manifest(root, manifest_loc))
     elif "build.gradle" in manifest_loc:
-      manifest_head.add_gradle(GradleFile(manifest_loc))
+      manifest_head.add_gradle(GradleFile(root, manifest_loc))
   print("-----------------\n--Final Structure--\n" + str(manifest_head))
   return str(manifest_head.get_permissions()) + "\n"
 
@@ -25,9 +25,9 @@ def get_manifests(root, manifest_locs):
   for manifest_loc in manifest_locs:
     if "AndroidManifest.xml" in manifest_loc:
       if not re.search(invalid_manifest_paths, manifest_loc):
-        manifest_head, merged = manifest_head.merge(Manifest(manifest_loc))
+        manifest_head, merged = manifest_head.merge(Manifest(root, manifest_loc))
     elif "build.gradle" in manifest_loc:
-      manifest_head.add_gradle(GradleFile(manifest_loc))
+      manifest_head.add_gradle(GradleFile(root, manifest_loc))
   return str(manifest_head.get_pertinent_files())
 
 if __name__ == "__main__":
@@ -39,6 +39,7 @@ if __name__ == "__main__":
     #}[sys.argv[1]])
     if sys.argv[1] == 'display_manifests':
       print(display_manifests(sys.argv[2], sys.argv[3:]))
+      print(" ")
     elif sys.argv[1] == 'get_manifests':
       print(get_manifests(sys.argv[2], sys.argv[3:]))
     

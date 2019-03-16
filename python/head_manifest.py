@@ -6,7 +6,7 @@ from gradle import GradleFile
 class HeadManifest(Manifest):
 
   def __init__(self):
-    Manifest.__init__(self, "HEAD")
+    Manifest.__init__(self, "", "HEAD")
     self.head_children = []
     self.gradle_files = []
     self.manifest_level = manifest_level.head
@@ -65,7 +65,9 @@ class HeadManifest(Manifest):
     permissions = []
     for child in self.head_children:
       permissions += child.get_permissions()
-    return set(permissions)
+    permissions = list(set(permissions))
+    permissions.sort()
+    return permissions
     
   def add_gradle(self, gradle):
     self.gradle_files.append(gradle)

@@ -6,8 +6,8 @@ import re
 
 class Manifest():
 
-  def __init__(self, location):
-    self.location = re.sub(r"^.*/master/","",location)
+  def __init__(self, root, location):
+    self.location = re.sub(re.escape(root) + r"/","",location)
     
     self.primary_child = None
     # Lazily initiated in get_manifest_level()

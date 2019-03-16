@@ -3,8 +3,8 @@ import re
 
 class GradleFile():
 
-  def __init__(self, location):
-    self.location = re.sub(r".*/master/","",location)
+  def __init__(self, root, location):
+    self.location = re.sub(re.escape(root) + r"/","",location)
     
     self.parser = GradleParser(location)
     

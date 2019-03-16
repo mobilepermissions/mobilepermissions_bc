@@ -12,7 +12,9 @@
 ###         Default is `python3`.
 
 ### Includes
-.   db_client/sqlite_client.sh
+
+## Change this include to switch out the database client
+.   db_client/mysql_client.sh
 
 
 
@@ -167,6 +169,12 @@ function test_manifest_location {
     commit_sha=`sed -e 's#.*~\(\)#\1#' <<< "$commit"`
     this_commit_output_loc=$output_loc/$commit_sha
     checkout_commit $this_commit_output_loc $commit_sha
+    
+    echo "Commit $commit_sha"
+    cd $repo_dir
+      git show -s --format=%ci $commit_sha
+      cd ../..
+    
     # Get manifest content for this commit
     # TODO instead of finding these files each time, can we just use the $pretinent_locations?
     this_commit_manifest_locs=`find $this_commit_output_loc -name "AndroidManifest.xml" -o -name "build.gradle";`
