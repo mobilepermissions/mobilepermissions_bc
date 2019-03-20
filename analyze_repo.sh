@@ -182,7 +182,6 @@ function test_manifest_location {
     
     # Get Database call args
     api_and_sdk=`$python_runtime $python_locate_manifests get_sdk_perm $this_commit_output_loc $this_commit_manifest_locs`
-    echo $api_and_sdk
     db_args="$commit_sha $api_and_sdk"
   
     # Add to database
