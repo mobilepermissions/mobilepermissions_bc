@@ -1,7 +1,8 @@
 # TODO move to config file
 db_user="root"
-db_pass="root"
 db_db="research"
+
+export MYSQL_PWD=root
 
 
 function insert_test {
@@ -30,7 +31,7 @@ function insert_commit_api {
   # $1 commit_sha
   # $2 min_api
   
-  echo "INSERT INTO commit_api (commit_sha,api_version) VALUES ('$1',$2);" | mysql -u$db_user -p$dp_pass $db_db;
+  r=`mysql -u$db_user $db_db -e "INSERT INTO commit_api (commit_sha,api_version) VALUES ('$1',$2);"`
 }
 
 function insert_permission {
@@ -38,5 +39,12 @@ function insert_permission {
   # $1 commit_sha
   # $2 permission
   
-  # TODO
+  # Try to insert permission, then get id
+  mysql -u$db_user $db_db -e "INSERT IGNORE INTO permissions (name) VALUES ('$2');"
+  perm_id=`mysql -u$db_user $db_db -s -N -e "SELECT id FROM permissions WHERE name='$2';"`
+  
+  # Add the permission to the commit
+  mysql -u$db_user $db_db -e "INSERT INTO commit_permissions (commit_sha, permission_id) VALUES ('$1','$perm_id');"
 }
+
+insert_commit_info TEST_COMMIT_SHA 21 PERM1 PERM2 PERM3

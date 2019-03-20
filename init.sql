@@ -1,6 +1,7 @@
 CREATE TABLE commit_api (
   commit_sha      varchar(64) NOT NULL,
-  api_version     TINYINT NOT NULL
+  api_version     TINYINT NOT NULL,
+  UNIQUE KEY      (commit_sha)
 );
 
 CREATE TABLE commit_permissions (
@@ -10,6 +11,7 @@ CREATE TABLE commit_permissions (
 
 CREATE TABLE permissions (
   id              INT unsigned NOT NULL AUTO_INCREMENT,
-  name            TEXT NOT NULL,
-  PRIMARY KEY     (id)
+  name            varchar(256) NOT NULL,
+  PRIMARY KEY     (id),
+  UNIQUE KEY      (name)
 );
