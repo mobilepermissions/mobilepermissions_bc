@@ -179,6 +179,14 @@ function test_manifest_location {
     # TODO instead of finding these files each time, can we just use the $pretinent_locations?
     this_commit_manifest_locs=`find $this_commit_output_loc -name "AndroidManifest.xml" -o -name "build.gradle";`
     this_commit_manifest_display=`$python_runtime $python_locate_manifests display_manifests $this_commit_output_loc $this_commit_manifest_locs`
+    
+    # Get Database call args
+    api_and_sdk=`$python_runtime $python_locate_manifests get_sdk_perm $this_commit_output_loc $this_commit_manifest_locs`
+    echo $api_and_sdk
+    db_args="$commit_sha $api_and_sdk"
+  
+    # Add to database
+    insert_commit_info $db_args
   
     # echo wasn't displaying newlines
     printf "$this_commit_manifest_display"

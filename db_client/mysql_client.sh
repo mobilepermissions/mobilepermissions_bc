@@ -46,5 +46,3 @@ function insert_permission {
   # Add the permission to the commit
   mysql -u$db_user $db_db -e "INSERT INTO commit_permissions (commit_sha, permission_id) VALUES ('$1','$perm_id');"
 }
-
-insert_commit_info TEST_COMMIT_SHA 21 PERM1 PERM2 PERM3

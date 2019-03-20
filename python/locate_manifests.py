@@ -29,6 +29,16 @@ def get_manifests(root, manifest_locs):
     elif "build.gradle" in manifest_loc:
       manifest_head.add_gradle(GradleFile(root, manifest_loc))
   return str(manifest_head.get_pertinent_files())
+  
+def get_sdk_perm(root, manifest_locs):
+  manifest_head = HeadManifest()
+  for manifest_loc in manifest_locs:
+    if "AndroidManifest.xml" in manifest_loc:
+      if not re.search(invalid_manifest_paths, manifest_loc):
+        manifest_head, merged = manifest_head.merge(Manifest(root, manifest_loc))
+    elif "build.gradle" in manifest_loc:
+      manifest_head.add_gradle(GradleFile(root, manifest_loc))
+  return manifest_head.get_command_line_string()
 
 if __name__ == "__main__":
   if len(sys.argv) >= 3:
@@ -42,5 +52,7 @@ if __name__ == "__main__":
       print(" ")
     elif sys.argv[1] == 'get_manifests':
       print(get_manifests(sys.argv[2], sys.argv[3:]))
+    elif sys.argv[1] == 'get_sdk_perm':
+      print(get_sdk_perm(sys.argv[2], sys.argv[3:]))
     
     

@@ -80,6 +80,10 @@ class HeadManifest(Manifest):
       ret.append(gradle.location)
     return " ".join(ret)
     
+  def get_command_line_string(self):
+    return str(self.get_min_sdk_version()) + " " + " ".join(self.get_permissions())
+    
+    
   
   
 if __name__ == "__main__":
