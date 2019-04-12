@@ -14,4 +14,4 @@ CREATE TABLE permissions (
   name            varchar(256) NOT NULL,
   PRIMARY KEY     (id),
   UNIQUE KEY      (name)
-);
+) ENGINE=InnoDB;
