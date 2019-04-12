@@ -1,7 +1,7 @@
 ### This file contains scripts for analyzing a single git repository
 
 ### Usage
-### 	analyze_repo 
+### 	analyze_repo [-a|--arg param]*
 ###       [-r|--repo repo_name] 
 ###         Specifies the name of the repo to perform the action on.
 ###         This will obtain the repo from github and then set the -d variable accordingly.
@@ -49,10 +49,6 @@
 		shift # past argument
 		shift # past value
 		;;
-    -tm|--test-manifest)
-    tm_arg=1
-		shift # past argument
-		;;
     -p|--python)
     python_runtime="$2"
 		shift # past argument
@@ -61,12 +57,28 @@
 	esac
 	done
 	
+### Functions
+  
 function repo_to_dir {
+  # Converts a repo string to a valid directory name.
+  # This is only done to reduce the number of directories created,
+  # and possible issues arising from analyzing multiple directories
+  # owned by the same user or organization
+  # ex. "company/repository" -> "company-repository"
 	c_d=${1//\//-}
 	echo "$gh_repos_dir/$c_d"
 }
 	
 function instantiate_repo {
+  # Performs an initial clone on the repository.
+  # For Example, the master branch of the repository where `-r` was
+  # specified as `me/myRepo` would clone the master branch at 
+  # github.com/me/myRepo.git into the local directory `$gh_repos_dir/me-myRepo/`
+  #
+  # Note: In order to avoid git from prompting for a username/password for 
+  # repositories which require credentials, the clone command supplies a dummy 
+  # usename and password of u:p.
+
 	### Pulls the repository specified as a parameter
 	gh_url="https://u:p@github.com/$repo_name.git"
 	
@@ -80,24 +92,12 @@ function instantiate_repo {
   repo_dir=$clone_dir
 }
 
-function get_releases {
-	### Gets the releases for the repo_name
-	
-  cd $repo_dir
-  
-    for tag in `git tag`; do
-  
-      output_loc="../../$version_root/$repo_dir/$tag"
-      attach_tag_head $output_loc $tag
-      sdk_version=`get_branch_sdk_version $output_loc`
-      echo "Found sdk version: $sdk_version"
-     
-    done
-    
-    cd ../..
-}
-
-function attach_tag_head {
+function checkout_branch_head {
+  # Checks out the head of the specified branch.
+  # This assumes that either a directory of an existing repository
+  # has been specified with the `-d|--directory` switch, or that the 
+  # current execution of the script cas set the $repo_dir variable. This 
+  # variable is set in `instantiate_repo`.
   ### Parameters
   # $1 output_location
   # $2 tag to checkout the head of
@@ -113,11 +113,14 @@ function attach_tag_head {
     
       cd ../..
   fi
-  
-  echo "Checked out head of branch: $2"
 }
 
 function checkout_commit {
+  # Checks out a specific commit of the current repo.
+  # This assumes that either a directory of an existing repository
+  # has been specified with the `-d|--directory` switch, or that the 
+  # current execution of the script cas set the $repo_dir variable. This 
+  # variable is set in `instantiate_repo`.
   ### Parameters
   # $1 output_location
   # $2 commit to checkout
@@ -133,7 +136,7 @@ function checkout_commit {
   fi
 }
 
-function get_branch_sdk_version {
+function get_project_sdk_version {
   ### Parameters
   # $1 branch_location
   
@@ -146,14 +149,28 @@ function get_branch_sdk_version {
 
 }
 
-function test_manifest_location {
-
-  output_loc="$version_root/$repo_dir"
-  output_loc_master=$output_loc/master
-  attach_tag_head $output_loc_master master
+function get_commits_for_pertinent_files {
+  # Gets the commit hashes for each commit that modified any of
+  # the pertinent AndroidManifest or build.gradle files. For definitions
+  # on what qualifies as pertinent, reference the assumptions.md file.
+  # Duplicate commit hashes will be removed.
+  #
+  # The form of the commit hash will be `%ct~%H`, where %ct is the unix timestamp
+  # of the commit hash, and %H is the commit hash.
+  #
+  # This assumes that either a directory of an existing repository
+  # has been specified with the `-d|--directory` switch, or that the 
+  # current execution of the script cas set the $repo_dir variable. This 
+  # variable is set in `instantiate_repo`.
+  ### Parameters
+  # $1 output_location
+  
+  output_loc_master=$1/master
+  checkout_branch_head $output_loc_master master
   manifest_locs=`find $output_loc_master -name "AndroidManifest.xml" -o -name "build.gradle";`
   pertinent_locations=`$python_runtime $python_locate_manifests get_manifests $output_loc_master $manifest_locs`
-  # cd is needed because the cit command references the current directory
+  
+  # cd is needed because the git command references the current directory
   cd $repo_dir
     # Get each commit where one of the pertinent files was modified
     all_commits=""
@@ -162,36 +179,55 @@ function test_manifest_location {
       all_commits="$all_commits $commits"
     done
     cd ../..
+  # Clean up master files
+  rm -rf $output_loc_master
   # Sort commits by their UNIX timestamp (Also removes duplicates)
-  sorted_commits=`echo $all_commits | tr " " "\n" | sort -nu`
-  for commit in $sorted_commits; do
-    # Get just the commit sha, now that we don't need timestamp for sorting
+  echo $all_commits | tr " " "\n" | sort -nu
+}
+
+function get_commit_info {
+  # gets the info for the given commit. This info is as follows:
+  # A space separated list of
+  # 1. the min API version for the Android Project
+  # 2...n. the permissions contained in the Android Project
+  ### Parameters
+  # $1 the output location for this commit
+  # $2 the commit sha
+    
+  # Get manifest content for this commit
+  # TODO instead of finding these files each time, can we just use the locations from the master branch?
+  this_commit_manifest_locs=`find $1 -name "AndroidManifest.xml" -o -name "build.gradle";`
+  this_commit_manifest_display=`$python_runtime $python_locate_manifests display_manifests $1 $this_commit_manifest_locs`
+  
+  # Get Database call args
+  api_and_sdk=`$python_runtime $python_locate_manifests get_sdk_perm $1 $this_commit_manifest_locs`
+  echo $api_and_sdk
+}
+
+function analyze_repo {
+  # Analyzes the given project for permissions and API version data for all
+  # commits pertinent to the conditions specified in the assumptions.md file.
+  
+  # Get the output location for the current content
+  output_loc="$version_root/$repo_dir"
+  mkdir -p $output_loc
+  # Get Pertinent commits
+  commits=`get_commits_for_pertinent_files $output_loc`
+  
+  for commit in $commits; do
+    # Clean the timestamp off the commit info, leaving just the hash
     commit_sha=`sed -e 's#.*~\(\)#\1#' <<< "$commit"`
     this_commit_output_loc=$output_loc/$commit_sha
     checkout_commit $this_commit_output_loc $commit_sha
     
-    echo "Commit $commit_sha"
-    cd $repo_dir
-      git show -s --format=%ci $commit_sha
-      cd ../..
-    
-    # Get manifest content for this commit
-    # TODO instead of finding these files each time, can we just use the $pretinent_locations?
-    this_commit_manifest_locs=`find $this_commit_output_loc -name "AndroidManifest.xml" -o -name "build.gradle";`
-    this_commit_manifest_display=`$python_runtime $python_locate_manifests display_manifests $this_commit_output_loc $this_commit_manifest_locs`
-    
-    # Get Database call args
-    api_and_sdk=`$python_runtime $python_locate_manifests get_sdk_perm $this_commit_output_loc $this_commit_manifest_locs`
-    db_args="$commit_sha $api_and_sdk"
-  
+    commit_info=`get_commit_info $this_commit_output_loc`
+    echo $commit_info
     # Add to database
-    insert_commit_info $db_args
-  
+    insert_commit_info $commit_sha $commit_info
     # echo wasn't displaying newlines
     printf "$this_commit_manifest_display"
     rm -rf $this_commit_output_loc
   done
-
 }
 	
 ### Make dirs if needed
@@ -205,12 +241,5 @@ function test_manifest_location {
 		echo "Cloned $repo_name."
 	fi
   
-#  if [ ! -z "$repo_dir" ]; then
-#    get_releases
-#    echo "Got releases under $repo_dir"
-#  fi
-  
-  if [ ! -z "$tm_arg" ]; then
-    test_manifest_location
-  fi
+  analyze_repo
   
