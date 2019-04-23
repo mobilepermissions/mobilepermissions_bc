@@ -4,6 +4,12 @@ from manifest import Manifest, manifest_level
 from gradle import GradleFile
 
 class HeadManifest(Manifest):
+  """
+  A wrapper for the merged `AndroidManifest` file that the app would use to determine
+  things like permissions, sdk version, etc. This class does not represent an actual file
+  within the file structure, but rather serves as a single API which queries a collection 
+  of merged manifests to get a collection of merged data.  
+  """
 
   def __init__(self):
     Manifest.__init__(self, "", "HEAD")
@@ -12,6 +18,9 @@ class HeadManifest(Manifest):
     self.manifest_level = manifest_level.head
   
   def __str__(self):
+    """
+    tostring implementation which provides output in a human readable format.
+    """
     ret = "HEAD (minSDK=" + str(self.get_min_sdk_version()) + ", targetSDK="  + str(self.get_target_sdk_version()) + ", permCount=" + str(len(self.get_permissions())) + ")" 
     cur_child = 0
     for child in self.head_children:
@@ -22,6 +31,10 @@ class HeadManifest(Manifest):
     return ret
 
   def merge(self, other_manifest):
+    """
+    Merges the manifest with a child manifest. This may throw out the manifest if
+    it was not determined to be of primary importance by logic in the manifest class.
+    """
     if other_manifest.get_manifest_level() != manifest_level.unknown:
       # attempt to merge into each of the children of the head
       for child in self.head_children:
@@ -40,6 +53,10 @@ class HeadManifest(Manifest):
     return self, False
     
   def get_min_sdk_version(self):
+    """
+    Gets the minSdkVersion that the android app with the appropriately merged manifest files
+    would use to build.
+    """
     min_sdk_version = 1
     for child in self.head_children:
       child_sdk = child.get_min_sdk_version()
@@ -51,6 +68,10 @@ class HeadManifest(Manifest):
     return min_sdk_version
     
   def get_target_sdk_version(self):
+    """
+    Gets the targetSdkVersion that the android app with the appropriately merged manifest files
+    would use to build.
+    """
     target_sdk_version = 1
     for child in self.head_children:
       child_sdk = child.get_target_sdk_version()
@@ -62,6 +83,10 @@ class HeadManifest(Manifest):
     return target_sdk_version
     
   def get_permissions(self):
+    """
+    Gets the permissions that the android app with the appropriately merged manifest files
+    would use to build.
+    """
     permissions = []
     for child in self.head_children:
       permissions += child.get_permissions()
@@ -70,9 +95,18 @@ class HeadManifest(Manifest):
     return permissions
     
   def add_gradle(self, gradle):
+    """
+    Adds a gradle file to the head manifest. There is no merging with gradle files,
+    but gradle files will be accounted for when getting manifest data from the sum total
+    of merged application build contents.
+    """
     self.gradle_files.append(gradle)
     
   def get_pertinent_files(self):
+    """
+    Gets a list of files that the merged manifest will take into account for when making
+    calls to this class's api. The files may not always be accounted for
+    """
     ret = []
     for child in self.head_children:
       ret += child.get_self_and_children_paths()
@@ -81,12 +115,17 @@ class HeadManifest(Manifest):
     return " ".join(ret)
     
   def get_command_line_string(self):
+    """
+    Gets a string that can easily be used with scripts by displaying pertinent contents
+    on a single line, separated by spaces.
+    """
     return str(self.get_min_sdk_version()) + " " + " ".join(self.get_permissions())
     
     
   
   
 if __name__ == "__main__":
+  # Pseudo-tests
   man0 = HeadManifest()
   man1 = Manifest("AndroidManifest.xml")
   man2 = Manifest("mobile/src/main/AndroidManifest.xml")

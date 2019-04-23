@@ -1,11 +1,16 @@
 import sys
 import xml.etree.ElementTree as ET
 
+# Android uses these variables to define the target values in their XML
 min_sdk_version_attribute = "{http://schemas.android.com/apk/res/android}minSdkVersion"
 target_sdk_version_attribute = "{http://schemas.android.com/apk/res/android}targetSdkVersion"
 permission_name_attribute = "{http://schemas.android.com/apk/res/android}name"
 
 class ManifestParser:
+  """
+  Parser implementation to contain the logic of reading files and parsing based off
+  regex patterns
+  """
 
   def __init__(self, loc):
     self.manifest_location = loc
@@ -18,8 +23,9 @@ class ManifestParser:
     self.permissions = None
 
   def get_min_sdk_version(self):
-    # Lazy getter for min_sdk_version
-    
+    """
+    Lazy getter for min_sdk_version
+    """
     # Try to set from parser, default to 1 otherwise
     if self.min_sdk_version == -1:
       try:
@@ -30,7 +36,9 @@ class ManifestParser:
     return self.min_sdk_version
 
   def get_target_sdk_version(self):
-    # Lazy getter for min_sdk_version
+    """
+    Lazy getter for min_sdk_version
+    """
     # Try to set from parser, default to 1 otherwise
     if self.target_sdk_version == -1:
       try:
@@ -41,7 +49,9 @@ class ManifestParser:
     return self.target_sdk_version
     
   def parse_manifest_for_sdk_version(self, version_type):
-    # Parse manifest file
+    """
+    Lazy getter that parses the manifest file for the sdk version
+    """
     if self.manifest_contents is None:
       self.manifest_contents = ET.parse(open(self.manifest_location, 'r'))
     root = self.manifest_contents.getroot()
@@ -49,6 +59,10 @@ class ManifestParser:
       return uses_sdk.attrib[version_type]
       
   def get_permissions(self):
+    """
+    Lazy getter that parses the manifest file for the permissions contained
+    within it.
+    """
     if self.permissions is None:
       self.permissions = []
       if self.manifest_contents == None:
@@ -59,11 +73,3 @@ class ManifestParser:
         if permission_name is not None:
           self.permissions.append(permission_name) 
     return self.permissions
-
-"""
-if __name__ == "__main__":
-  if len(sys.argv) >= 2:
-    print({
-      'get_sdk_version': get_sdk_version(sys.argv[2])
-    }[sys.argv[1]])
-    """
